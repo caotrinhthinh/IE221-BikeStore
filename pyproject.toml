@@ -2,6 +2,9 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["apps", "config"]
+
 [project]
 name = "ie221-bikestore"
 version = "0.1.0"
