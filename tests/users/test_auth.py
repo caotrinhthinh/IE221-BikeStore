@@ -34,7 +34,7 @@ class TestJWTLogin:
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_inactive_user_cannot_login(self, api_client: APIClient, db):
-        user = User.objects.create_user(
+        User.objects.create_user(
             email="inactive@example.com",
             password="Str0ng!Pass",
             is_active=False,

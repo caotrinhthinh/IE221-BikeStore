@@ -9,7 +9,7 @@ packages = ["apps", "config"]
 name = "ie221-bikestore"
 version = "0.1.0"
 description = "BikeStore B2B Sales Platform — IE221"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 
 dependencies = [
     # Core
@@ -67,16 +67,28 @@ dev = [
 
 [tool.ruff]
 line-length = 88
-target-version = "py312"
-select = ["E", "F", "W", "I", "UP", "B", "C90"]
-ignore = ["E501"]
+target-version = "py311"
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # isort
+    "C4",  # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long (let formatter handle it)
+]
+
+[tool.ruff.lint.per-file-ignores]
 "*/migrations/*.py" = ["E501", "F401"]
 "*/tests/*.py" = ["B011"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.11"
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 strict = true
 ignore_missing_imports = true
