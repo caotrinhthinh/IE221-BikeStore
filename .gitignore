@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual envs / uv
+.venv/
+venv/
+.uv/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+media/
+staticfiles/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Pytest / Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Mypy
+.mypy_cache/
+.dmypy.json
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
