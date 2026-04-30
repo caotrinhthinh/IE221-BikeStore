@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "corsheaders",
     "drf_spectacular",
+    "mptt",
     # Internal
     "apps.core",
     "apps.users",

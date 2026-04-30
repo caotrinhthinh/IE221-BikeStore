@@ -50,7 +50,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/')"
 
-CMD ["gunicorn", "config.wsgi:application", \
+CMD ["gunicorn", "config.asgi:application", \
      "--bind", "0.0.0.0:8000", \
      "--workers", "4", \
      "--worker-class", "uvicorn.workers.UvicornWorker", \
