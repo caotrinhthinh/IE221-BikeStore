@@ -1,6 +1,7 @@
 """apps/core/exceptions.py — project-wide exception definitions."""
-from rest_framework.exceptions import APIException
+
 from rest_framework import status
+from rest_framework.exceptions import APIException
 
 
 class ServiceError(Exception):
@@ -29,7 +30,28 @@ class InvalidStatusTransitionError(ServiceError):
 
 # ── DRF API exceptions ────────────────────────────────────────────
 
+
 class ConflictError(APIException):
     status_code = status.HTTP_409_CONFLICT
     default_detail = "Conflict."
     default_code = "conflict"
+
+
+def custom_exception_handler(exc, context):
+    """
+    Map ServiceErrors from the domain layer to HTTP responses.
+    This runs before DRF's default exception handler.
+    """
+    from rest_framework.exceptions import ValidationError
+    from rest_framework.views import exception_handler
+
+    # Map our domain exceptions to DRF API exceptions
+    if isinstance(exc, (InsufficientStockError, InvalidStatusTransitionError)):
+        exc = ConflictError(detail=str(exc))
+    elif isinstance(exc, ServiceError):
+        exc = ValidationError(detail=str(exc))
+
+    # Call REST framework's default exception handler
+    response = exception_handler(exc, context)
+
+    return response

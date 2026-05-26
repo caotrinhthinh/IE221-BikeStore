@@ -1,6 +1,6 @@
 """apps/core/pagination.py — project-wide pagination standard."""
+
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
 
 
 class StandardPagination(PageNumberPagination):
