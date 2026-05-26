@@ -1,6 +1,10 @@
 """apps/users/serializers.py — auth serializers."""
+
+from dj_rest_auth.registration.serializers import (
+    RegisterSerializer as BaseRegisterSerializer,
+)
 from rest_framework import serializers
-from dj_rest_auth.registration.serializers import RegisterSerializer as BaseRegisterSerializer
+
 from .models import User
 
 
@@ -9,7 +13,15 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "email", "first_name", "last_name", "full_name", "role", "date_joined"]
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "full_name",
+            "role",
+            "date_joined",
+        ]
         read_only_fields = ["id", "role", "date_joined"]
 
 

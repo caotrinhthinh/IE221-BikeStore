@@ -9,9 +9,15 @@ Design decisions:
 - Email is the login identifier, no username field.
 - Role enum stored as CharField for readability in DB queries.
 """
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.db import models
+
 import uuid
+
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
+from django.db import models
 
 
 class Role(models.TextChoices):
@@ -19,6 +25,7 @@ class Role(models.TextChoices):
     Role hierarchy (least → most privileged):
     CUSTOMER < STAFF < STORE_MANAGER < ADMIN
     """
+
     CUSTOMER = "customer", "Customer"
     STAFF = "staff", "Staff"
     STORE_MANAGER = "store_manager", "Store Manager"

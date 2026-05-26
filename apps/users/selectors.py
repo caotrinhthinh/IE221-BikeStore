@@ -5,6 +5,7 @@ Rules:
 - NO business logic here — only DB reads.
 - Views and services use selectors; NEVER call User.objects.* directly in views.
 """
+
 from .models import User
 
 

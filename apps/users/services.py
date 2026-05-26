@@ -6,6 +6,7 @@ Rules (HackSoft style):
 - Services call selectors for read-only queries.
 - Services own all mutations and external calls.
 """
+
 from __future__ import annotations
 
 import logging
@@ -13,14 +14,14 @@ from typing import TYPE_CHECKING
 
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings
+from django.utils.crypto import get_random_string
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework.request import Request
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import User
 from . import selectors as user_selectors
+from .models import User
 
 if TYPE_CHECKING:
     pass
@@ -29,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 # ── JWT helpers ───────────────────────────────────────────────────
+
 
 def create_jwt_pair(user: User) -> dict[str, str]:
     """Return access + refresh JWT tokens for a user."""
@@ -41,19 +43,19 @@ def create_jwt_pair(user: User) -> dict[str, str]:
 
 # ── Google OAuth2 ─────────────────────────────────────────────────
 
+
 def get_google_auth_url(request: Request) -> str:
     """
     Build the Google OAuth2 authorization URL.
     Uses allauth's adapter to ensure the state param (CSRF) is set.
     """
-    from allauth.socialaccount.providers.google.provider import GoogleProvider
-    from allauth.socialaccount.helpers import complete_social_login
-
     adapter = GoogleOAuth2Adapter(request)
     callback_url: str = settings.SOCIALACCOUNT_PROVIDERS["google"]["APP"].get(
         "callback_url",
         request.build_absolute_uri("/auth/google/callback/"),
     )
+    state = get_random_string(32)
+    request.session["google_oauth2_state"] = state
     client = OAuth2Client(
         request,
         adapter.get_client_id(request),
@@ -65,7 +67,7 @@ def get_google_auth_url(request: Request) -> str:
     )
     return client.get_redirect_url(
         adapter.authorize_url,
-        extra_params={"access_type": "online"},
+        extra_params={"access_type": "online", "state": state},
     )
 
 
@@ -91,7 +93,13 @@ def handle_google_callback(
     if not code:
         raise ValidationError({"code": "Authorization code is required."})
     if not state:
-        raise ValidationError({"state": "State parameter is required (CSRF protection)."})
+        raise ValidationError(
+            {"state": "State parameter is required (CSRF protection)."}
+        )
+
+    expected_state = request.session.get("google_oauth2_state")
+    if expected_state and state != expected_state:
+        raise ValidationError({"state": "State parameter mismatch."})
 
     from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
     from allauth.socialaccount.providers.oauth2.client import OAuth2Client
@@ -110,7 +118,9 @@ def handle_google_callback(
     try:
         token = client.get_access_token(code)
         social_token = adapter.parse_token(token)
-        social_login = adapter.complete_login(request, None, social_token, response=token)
+        social_login = adapter.complete_login(
+            request, None, social_token, response=token
+        )
         social_login.token = social_token
     except Exception as exc:
         logger.warning("Google OAuth2 token exchange failed: %s", exc)
