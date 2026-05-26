@@ -29,6 +29,7 @@ dependencies = [
     "celery[redis]>=5.4",
     # API helpers
     "drf-spectacular>=0.27",
+    "drf-spectacular-sidecar",
     "django-cors-headers>=4.0",
     "django-filter>=24.0",
     # Domain / Models
