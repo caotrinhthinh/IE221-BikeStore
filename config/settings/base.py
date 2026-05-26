@@ -171,8 +171,10 @@ REST_AUTH = {
     "USE_JWT": True,
     "JWT_AUTH_COOKIE": None,  # stateless — no cookie
     "JWT_AUTH_REFRESH_COOKIE": None,
+    "JWT_AUTH_HTTPONLY": False,
     "JWT_AUTH_RETURN_EXPIRATION": True,
     "TOKEN_MODEL": None,
+    "LOGIN_SERIALIZER": "apps.users.serializers.CustomLoginSerializer",
 }
 
 # ── dj-rest-auth registration ─────────────────────────────────────

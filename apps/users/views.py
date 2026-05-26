@@ -30,7 +30,6 @@ class RateLimitedLoginView(DjRestAuthLoginView):
     """POST /auth/login/ with IP-based brute-force protection."""
 
     permission_classes = [AllowAny]
-    authentication_classes = []
     max_failed_attempts = 5
     window_seconds = 15 * 60
 
@@ -109,7 +108,6 @@ class GoogleCallbackView(APIView):
     """
 
     permission_classes = [AllowAny]
-    authentication_classes = []
 
     @extend_schema(
         tags=["Auth"],
