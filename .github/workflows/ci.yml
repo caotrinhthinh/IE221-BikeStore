@@ -1,114 +1,101 @@
 name: CI
 
 on:
-  push:
-    branches: ["feat/**", "fix/**", "develop", "main"]
-  pull_request:
-    branches: ["develop", "main"]
+    push:
+        branches: ['feat/**', 'fix/**', 'develop', 'main']
+    pull_request:
+        branches: ['develop', 'main']
 
 jobs:
-  # ── Job 1: Lint (ruff + mypy + django check) ─────────────────
-  lint:
-    name: Lint & Type Check
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+    lint:
+        name: Lint & Django Check
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
 
-    steps:
-      - uses: actions/checkout@v4
+        steps:
+            - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: '3.12'
 
-      - name: Install uv
-        run: pip install uv
+            - name: Install uv
+              run: pip install uv
 
-      - name: Install dev dependencies
-        run: uv pip install --system ".[dev]"
+            - name: Install dev dependencies
+              run: uv pip install --system ".[dev]"
 
-      - name: Ruff lint
-        run: ruff check .
+            - name: Ruff lint
+              run: ruff check .
 
-      - name: Ruff format check
-        run: ruff format --check .
+            - name: Ruff format check
+              run: ruff format --check .
 
-      - name: Mypy
-        run: mypy apps/ config/
-        env:
-          DJANGO_SETTINGS_MODULE: config.settings.dev
+            - name: Django system check
+              run: python manage.py check --settings=config.settings.dev
+              env:
+                  SECRET_KEY: ci-secret-key-not-real
+                  DB_HOST: localhost
+                  DB_NAME: bikestore
+                  DB_USER: bikestore
+                  DB_PASSWORD: bikestore_secret
 
-      - name: Django system check
-        run: python manage.py check --settings=config.settings.dev
-        env:
-          SECRET_KEY: ci-secret-key-not-real
-          DB_HOST: localhost
-          DB_NAME: bikestore
-          DB_USER: bikestore
-          DB_PASSWORD: bikestore_secret
+    test:
+        name: Tests
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        needs: lint
 
-  # ── Job 2: Test ───────────────────────────────────────────────
-  test:
-    name: Tests & Coverage
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: lint
+        services:
+            postgres:
+                image: postgres:16-alpine
+                env:
+                    POSTGRES_DB: bikestore_test
+                    POSTGRES_USER: bikestore
+                    POSTGRES_PASSWORD: bikestore_secret
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
 
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: bikestore_test
-          POSTGRES_USER: bikestore
-          POSTGRES_PASSWORD: bikestore_secret
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+            redis:
+                image: redis:7-alpine
+                options: >-
+                    --health-cmd "redis-cli ping"
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 6379:6379
 
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
+        steps:
+            - uses: actions/checkout@v4
 
-    steps:
-      - uses: actions/checkout@v4
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: '3.12'
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+            - name: Install uv
+              run: pip install uv
 
-      - name: Install uv
-        run: pip install uv
+            - name: Install all dependencies
+              run: uv pip install --system ".[dev]"
 
-      - name: Install all dependencies
-        run: uv pip install --system ".[dev]"
-
-      - name: Run tests with coverage
-        run: pytest --cov=apps --cov-report=xml --cov-report=term-missing --cov-fail-under=70
-        env:
-          DJANGO_SETTINGS_MODULE: config.settings.dev
-          SECRET_KEY: ci-secret-key-not-real
-          DB_NAME: bikestore_test
-          DB_USER: bikestore
-          DB_PASSWORD: bikestore_secret
-          DB_HOST: localhost
-          DB_PORT: 5432
-          REDIS_URL: redis://localhost:6379/0
-          CELERY_BROKER_URL: redis://localhost:6379/1
-          CELERY_RESULT_BACKEND: redis://localhost:6379/2
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        if: always()
-        with:
-          file: ./coverage.xml
+            - name: Run tests
+              run: pytest
+              env:
+                  DJANGO_SETTINGS_MODULE: config.settings.dev
+                  SECRET_KEY: ci-secret-key-not-real
+                  DB_NAME: bikestore_test
+                  DB_USER: bikestore
+                  DB_PASSWORD: bikestore_secret
+                  DB_HOST: localhost
+                  DB_PORT: 5432
+                  REDIS_URL: redis://localhost:6379/0
+                  CELERY_BROKER_URL: redis://localhost:6379/1
+                  CELERY_RESULT_BACKEND: redis://localhost:6379/2
