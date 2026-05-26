@@ -27,7 +27,7 @@ class HealthCheckView(APIView):
                 "status": serializers.CharField(),
                 "services": serializers.DictField(child=serializers.BooleanField()),
             },
-        )
+        ),
     )
     def get(self, request: Request) -> Response:
         status = {"db": False, "redis": False, "celery": False}

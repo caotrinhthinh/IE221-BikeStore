@@ -225,12 +225,12 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
     "REDOC_DIST": "SIDECAR",
     "TAGS": [
-        {"name": "Auth",    "description": "Authentication & JWT tokens"},
+        {"name": "Auth", "description": "Authentication & JWT tokens"},
         {"name": "Catalog", "description": "Products, Brands, Categories & Stocks"},
-        {"name": "Orders",  "description": "Order lifecycle — create, ship, cancel"},
-        {"name": "Stores",  "description": "Store management"},
-        {"name": "Users",  "description": "Customers & Staff"},
-        {"name": "System",  "description": "Health check & monitoring"},
+        {"name": "Orders", "description": "Order lifecycle — create, ship, cancel"},
+        {"name": "Stores", "description": "Store management"},
+        {"name": "Users", "description": "Customers & Staff"},
+        {"name": "System", "description": "Health check & monitoring"},
     ],
 }
 

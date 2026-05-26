@@ -103,7 +103,9 @@ class OrderViewSet(
             )
         return selectors.get_no_orders()
 
-    @extend_schema(tags=["Orders"], request=OrderCreateSerializer, responses={201: OrderSerializer})
+    @extend_schema(
+        tags=["Orders"], request=OrderCreateSerializer, responses={201: OrderSerializer}
+    )
     def create(self, request, *args, **kwargs):
         serializer = OrderCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

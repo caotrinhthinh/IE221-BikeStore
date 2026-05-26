@@ -11,6 +11,7 @@ Notes:
 from contextlib import suppress
 
 from dj_rest_auth.views import LoginView as DjRestAuthLoginView
+from dj_rest_auth.views import LogoutView as _DjLogoutView
 from django.core.cache import cache
 from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer
 from rest_framework import serializers, status
@@ -18,6 +19,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenRefreshView as _TokenRefreshView
 
 from . import services as user_services
 from .serializers import UserSerializer
@@ -133,8 +135,6 @@ class GoogleCallbackView(APIView):
 
 
 # ── Tagged wrappers for third-party views ─────────────────────────────────────
-from dj_rest_auth.views import LogoutView as _DjLogoutView  # noqa: E402
-from rest_framework_simplejwt.views import TokenRefreshView as _TokenRefreshView  # noqa: E402
 
 
 @extend_schema_view(post=extend_schema(tags=["Auth"]))
