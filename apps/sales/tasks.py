@@ -1,0 +1,40 @@
+"""apps/sales/tasks.py — Sales background tasks."""
+
+import logging
+
+from celery import shared_task
+
+logger = logging.getLogger(__name__)
+
+
+@shared_task(bind=True, max_retries=3)
+def send_order_confirmation(self, order_id: str) -> str:
+    """
+    Send order confirmation email.
+    High priority queue — retries with exponential backoff.
+    """
+    try:
+        logger.info("Sending order confirmation for order %s", order_id)
+        # Email sending logic would go here (e.g. django.core.mail.send_mail)
+        return f"Confirmation sent for {order_id}"
+    except Exception as exc:
+        logger.error("Failed to send confirmation for %s: %s", order_id, exc)
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
+@shared_task
+def cleanup_expired_orders() -> int:
+    """
+    Cancel PENDING orders older than 7 days.
+    Runs periodically (e.g. daily via celery-beat).
+
+    Uses selectors to get the queryset and bulk-updates status to REJECTED.
+    """
+    from .models import OrderStatus
+    from .selectors import get_pending_orders_older_than
+
+    expired_qs = get_pending_orders_older_than(days=7)
+    count = expired_qs.update(status=OrderStatus.REJECTED)
+
+    logger.info("Cleaned up %d expired PENDING orders", count)
+    return count

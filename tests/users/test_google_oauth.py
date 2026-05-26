@@ -10,11 +10,13 @@ Coverage targets:
 ✓ Missing state param → 400 ValidationError (CSRF)
 ✓ Google revokes token → 401 AuthenticationFailed
 """
+
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
+
 from apps.users.models import User
 
 
@@ -22,7 +24,9 @@ from apps.users.models import User
 class TestGoogleCallback:
     CALLBACK_URL = "/auth/google/callback/"
 
-    def _mock_social_login(self, email: str, first_name: str = "Test", last_name: str = "User"):
+    def _mock_social_login(
+        self, email: str, first_name: str = "Test", last_name: str = "User"
+    ):
         """Build a minimal allauth social_login mock."""
         mock_login = MagicMock()
         mock_login.user.email = email
@@ -82,6 +86,7 @@ class TestGoogleCallback:
         db,
     ):
         from rest_framework.exceptions import AuthenticationFailed
+
         mock_handle.side_effect = AuthenticationFailed("Google authentication failed.")
 
         response = api_client.get(

@@ -1,9 +1,11 @@
 """
 config/settings/base.py — shared settings for all environments.
 """
-from pathlib import Path
-from decouple import config, Csv
+
 from datetime import timedelta
+from pathlib import Path
+
+from decouple import Csv, config
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -20,7 +22,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-    "django_celery_beat",
     # Third-party
     "rest_framework",
     "rest_framework_simplejwt",
@@ -33,6 +34,7 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "corsheaders",
     "drf_spectacular",
+    "drf_spectacular_sidecar",
     # Internal
     "apps.core",
     "apps.users",
@@ -41,8 +43,10 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",                       # must be first
+    "corsheaders.middleware.CorsMiddleware",  # must be first
+    "apps.core.middleware.RequestIDMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "apps.core.middleware.SecurityHeadersMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -79,7 +83,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": config("DB_NAME", default="bikestore"),
         "USER": config("DB_USER", default="bikestore"),
-        "PASSWORD": config("DB_PASSWORD", default="bikestore_secret"),
+        "PASSWORD": config("DB_PASSWORD"),
         "HOST": config("DB_HOST", default="db"),
         "PORT": config("DB_PORT", default="5432"),
         "CONN_MAX_AGE": 60,
@@ -91,7 +95,9 @@ DATABASES = {
 AUTH_USER_MODEL = "users.User"
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -112,6 +118,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "EXCEPTION_HANDLER": "apps.core.exceptions.custom_exception_handler",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "apps.core.pagination.StandardPagination",
     "PAGE_SIZE": 20,
@@ -143,9 +150,8 @@ SIMPLE_JWT = {
 
 # ── Allauth / OAuth2 ─────────────────────────────────────────────
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"  # set to "mandatory" in prod
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -156,16 +162,19 @@ SOCIALACCOUNT_PROVIDERS = {
         "APP": {
             "client_id": config("GOOGLE_CLIENT_ID", default=""),
             "secret": config("GOOGLE_CLIENT_SECRET", default=""),
+            "callback_url": config("GOOGLE_CALLBACK_URL", default=""),
         },
     }
 }
 
 REST_AUTH = {
     "USE_JWT": True,
-    "JWT_AUTH_COOKIE": None,          # stateless — no cookie
+    "JWT_AUTH_COOKIE": None,  # stateless — no cookie
     "JWT_AUTH_REFRESH_COOKIE": None,
+    "JWT_AUTH_HTTPONLY": False,
     "JWT_AUTH_RETURN_EXPIRATION": True,
     "TOKEN_MODEL": None,
+    "LOGIN_SERIALIZER": "apps.users.serializers.CustomLoginSerializer",
 }
 
 # ── dj-rest-auth registration ─────────────────────────────────────
@@ -185,7 +194,9 @@ CACHES = {
 
 # ── Celery ───────────────────────────────────────────────────────
 CELERY_BROKER_URL: str = config("CELERY_BROKER_URL", default="redis://redis:6379/1")
-CELERY_RESULT_BACKEND: str = config("CELERY_RESULT_BACKEND", default="redis://redis:6379/2")
+CELERY_RESULT_BACKEND: str = config(
+    "CELERY_RESULT_BACKEND", default="redis://redis:6379/2"
+)
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Asia/Ho_Chi_Minh"
@@ -211,6 +222,18 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "B2B Sales & Production Management Platform",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    # Assets served locally via sidecar (no CDN/internet needed)
+    "SWAGGER_UI_DIST": "SIDECAR",
+    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+    "REDOC_DIST": "SIDECAR",
+    "TAGS": [
+        {"name": "Auth", "description": "Authentication & JWT tokens"},
+        {"name": "Catalog", "description": "Products, Brands, Categories & Stocks"},
+        {"name": "Orders", "description": "Order lifecycle — create, ship, cancel"},
+        {"name": "Stores", "description": "Store management"},
+        {"name": "Users", "description": "Customers & Staff"},
+        {"name": "System", "description": "Health check & monitoring"},
+    ],
 }
 
 # ── CORS ─────────────────────────────────────────────────────────

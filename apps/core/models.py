@@ -6,7 +6,9 @@ Rules:
 - UUID primary key prevents integer enumeration attacks.
 - created_at / updated_at are indexed for efficient time-range queries.
 """
+
 import uuid
+
 from django.db import models
 
 

@@ -1,4 +1,5 @@
 """apps/sales/apps.py"""
+
 from django.apps import AppConfig
 
 

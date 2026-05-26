@@ -1,4 +1,5 @@
 """apps/production/apps.py"""
+
 from django.apps import AppConfig
 
 
