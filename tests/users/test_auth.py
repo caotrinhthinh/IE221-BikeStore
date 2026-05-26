@@ -11,26 +11,34 @@ Coverage targets (Sprint 1):
 ✓ inactive user → 401
 ✓ all 4 role combinations can login
 """
+
 import pytest
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from apps.users.models import User, Role
+
+from apps.users.models import Role, User
 
 
 @pytest.mark.django_db
 class TestJWTLogin:
     def test_login_returns_tokens(self, api_client: APIClient, customer_user: User):
         url = reverse("auth-login")
-        response = api_client.post(url, {"email": "customer@example.com", "password": "Str0ng!Pass"})
+        response = api_client.post(
+            url, {"email": "customer@example.com", "password": "Str0ng!Pass"}
+        )
 
         assert response.status_code == status.HTTP_200_OK
         assert "access" in response.data
         assert "refresh" in response.data
 
-    def test_wrong_password_returns_401(self, api_client: APIClient, customer_user: User):
+    def test_wrong_password_returns_401(
+        self, api_client: APIClient, customer_user: User
+    ):
         url = reverse("auth-login")
-        response = api_client.post(url, {"email": "customer@example.com", "password": "WrongPass"})
+        response = api_client.post(
+            url, {"email": "customer@example.com", "password": "WrongPass"}
+        )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_inactive_user_cannot_login(self, api_client: APIClient, db):
@@ -40,10 +48,14 @@ class TestJWTLogin:
             is_active=False,
         )
         url = reverse("auth-login")
-        response = api_client.post(url, {"email": "inactive@example.com", "password": "Str0ng!Pass"})
+        response = api_client.post(
+            url, {"email": "inactive@example.com", "password": "Str0ng!Pass"}
+        )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    @pytest.mark.parametrize("role", [Role.CUSTOMER, Role.STAFF, Role.STORE_MANAGER, Role.ADMIN])
+    @pytest.mark.parametrize(
+        "role", [Role.CUSTOMER, Role.STAFF, Role.STORE_MANAGER, Role.ADMIN]
+    )
     def test_all_roles_can_login(self, api_client: APIClient, db, role: str):
         email = f"{role}@example.com"
         User.objects.create_user(email=email, password="Str0ng!Pass", role=role)
@@ -59,7 +71,9 @@ class TestJWTRefresh:
         url = reverse("auth-login")
         return api_client.post(url, {"email": email, "password": password})
 
-    def test_refresh_returns_new_access_token(self, api_client: APIClient, customer_user: User):
+    def test_refresh_returns_new_access_token(
+        self, api_client: APIClient, customer_user: User
+    ):
         login_resp = self._login(api_client)
         refresh = login_resp.data["refresh"]
 
@@ -84,7 +98,9 @@ class TestJWTLogout:
         resp = api_client.post(url, {"email": email, "password": password})
         return resp.data
 
-    def test_logout_blacklists_refresh_token(self, api_client: APIClient, customer_user: User):
+    def test_logout_blacklists_refresh_token(
+        self, api_client: APIClient, customer_user: User
+    ):
         tokens = self._login(api_client)
         access = tokens["access"]
         refresh = tokens["refresh"]

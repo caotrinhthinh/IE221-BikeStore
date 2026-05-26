@@ -1,7 +1,8 @@
 # conftest.py — project-wide pytest fixtures
 import pytest
 from rest_framework.test import APIClient
-from apps.users.models import User, Role
+
+from apps.users.models import Role, User
 
 
 @pytest.fixture
