@@ -36,6 +36,9 @@ if not RUNNING_IN_DOCKER:
     CELERY_BROKER_URL = "memory://"
     CELERY_RESULT_BACKEND = "cache+memory://"
 
+# Disable throttling in development and test environments
+REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []  # noqa: F405
+
 # Relaxed email
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
