@@ -48,9 +48,13 @@ def get_products_with_stock(store_id: str) -> QuerySet[Product]:
 
 def get_stock_for_store(store_id: str) -> QuerySet[Stock]:
     """Return all stock entries for a given store with product details."""
-    return Stock.objects.select_related(
-        "store", "product", "product__brand", "product__category"
-    ).filter(store_id=store_id)
+    return (
+        Stock.objects.select_related(
+            "store", "product", "product__brand", "product__category"
+        )
+        .filter(store_id=store_id)
+        .order_by("product__name")
+    )
 
 
 def get_all_stock() -> QuerySet[Stock]:

@@ -52,6 +52,20 @@ class StaffFactory(DjangoModelFactory):
     active = True
 
 
+class ManagerStaffFactory(DjangoModelFactory):
+    """Staff profile linked to a user with STORE_MANAGER role."""
+
+    class Meta:
+        model = Staff
+
+    user = factory.SubFactory(UserFactory, role=Role.STORE_MANAGER)
+    store = factory.SubFactory(StoreFactory)
+    first_name = factory.Faker("first_name")
+    last_name = factory.Faker("last_name")
+    email = factory.SelfAttribute("user.email")
+    active = True
+
+
 class CategoryFactory(DjangoModelFactory):
     class Meta:
         model = Category
