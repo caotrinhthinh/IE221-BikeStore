@@ -234,6 +234,10 @@ SPECTACULAR_SETTINGS = {
         {"name": "Users", "description": "Customers & Staff"},
         {"name": "System", "description": "Health check & monitoring"},
     ],
+    "POSTPROCESSING_HOOKS": [
+        "apps.core.schema.merge_auth_tags_hook",
+        "drf_spectacular.hooks.postprocess_schema_enums",
+    ],
 }
 
 # ── CORS ─────────────────────────────────────────────────────────

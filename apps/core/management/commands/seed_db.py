@@ -58,13 +58,38 @@ class Command(BaseCommand):
             last_name="Super",
         )
 
-        # Store Manager
+        # Store Managers
+        manager_hanoi = User.objects.create_user(
+            email="manager_hanoi@example.com",
+            password="Str0ng!Pass",
+            role=Role.STORE_MANAGER,
+            first_name="Hanoi",
+            last_name="Manager",
+        )
+
+        # Keep manager@example.com for backward compatibility
         manager_user = User.objects.create_user(
             email="manager@example.com",
             password="Str0ng!Pass",
             role=Role.STORE_MANAGER,
             first_name="Manager",
             last_name="Store",
+        )
+
+        manager_saigon = User.objects.create_user(
+            email="manager_saigon@example.com",
+            password="Str0ng!Pass",
+            role=Role.STORE_MANAGER,
+            first_name="Saigon",
+            last_name="Manager",
+        )
+
+        manager_danang = User.objects.create_user(
+            email="manager_danang@example.com",
+            password="Str0ng!Pass",
+            role=Role.STORE_MANAGER,
+            first_name="Danang",
+            last_name="Manager",
         )
 
         # Staff
@@ -95,13 +120,37 @@ class Command(BaseCommand):
             name="Danang BikeStore", email="danang@bikestore.com"
         )
 
-        # Assign staff and manager to stores
+        # Assign staff and managers to stores
+        Staff.objects.create(
+            user=manager_hanoi,
+            store=hanoi_store,
+            first_name=manager_hanoi.first_name,
+            last_name=manager_hanoi.last_name,
+            email=manager_hanoi.email,
+            active=True,
+        )
         Staff.objects.create(
             user=manager_user,
             store=hanoi_store,
             first_name=manager_user.first_name,
             last_name=manager_user.last_name,
             email=manager_user.email,
+            active=True,
+        )
+        Staff.objects.create(
+            user=manager_saigon,
+            store=saigon_store,
+            first_name=manager_saigon.first_name,
+            last_name=manager_saigon.last_name,
+            email=manager_saigon.email,
+            active=True,
+        )
+        Staff.objects.create(
+            user=manager_danang,
+            store=danang_store,
+            first_name=manager_danang.first_name,
+            last_name=manager_danang.last_name,
+            email=manager_danang.email,
             active=True,
         )
         Staff.objects.create(
