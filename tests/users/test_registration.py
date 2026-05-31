@@ -81,3 +81,22 @@ class TestUserRegistration:
         # 3. Verify email is sent
         assert len(mail.outbox) == 1
         assert mail.outbox[0].to == ["unverified_resend@example.com"]
+
+    def test_registration_fails_when_email_already_exists(self, api_client: APIClient):
+        # Create an existing user
+        User.objects.create_user(
+            email="existing_user@example.com", password="Str0ng!Pass123"
+        )
+
+        payload = {
+            "email": "existing_user@example.com",
+            "password1": "AnotherPass!123",
+            "password2": "AnotherPass!123",
+            "first_name": "Nguyen",
+            "last_name": "B",
+        }
+
+        response = api_client.post(self.URL_REGISTER, payload)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "email" in response.data
+        assert any("already registered" in str(err) for err in response.data["email"])

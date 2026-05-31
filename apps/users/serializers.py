@@ -41,6 +41,16 @@ class RegisterSerializer(BaseRegisterSerializer):
         data["last_name"] = self.validated_data.get("last_name", "")
         return data
 
+    def validate_email(self, email):
+        from allauth.account.adapter import get_adapter
+
+        email = get_adapter().clean_email(email)
+        if User.objects.filter(email__iexact=email).exists():
+            raise serializers.ValidationError(
+                _("A user is already registered with this e-mail address.")
+            )
+        return email
+
     def save(self, request):  # type: ignore[override]
         user = super().save(request)
         user.first_name = self.cleaned_data.get("first_name", "")
