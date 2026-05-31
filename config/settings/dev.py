@@ -39,8 +39,10 @@ if not RUNNING_IN_DOCKER:
 # Disable throttling in development and test environments
 REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []  # noqa: F405
 
-# Relaxed email
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Relaxed email - respect .env but fallback to console
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
+)
 
 # Simplified logging for development
 LOGGING = {
