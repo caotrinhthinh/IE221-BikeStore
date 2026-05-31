@@ -42,10 +42,15 @@ class TestJWTLogin:
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_inactive_user_cannot_login(self, api_client: APIClient, db):
-        User.objects.create_user(
+        user = User.objects.create_user(
             email="inactive@example.com",
             password="Str0ng!Pass",
             is_active=False,
+        )
+        from allauth.account.models import EmailAddress
+
+        EmailAddress.objects.create(
+            user=user, email=user.email, primary=True, verified=True
         )
         url = reverse("auth-login")
         response = api_client.post(
@@ -58,7 +63,12 @@ class TestJWTLogin:
     )
     def test_all_roles_can_login(self, api_client: APIClient, db, role: str):
         email = f"{role}@example.com"
-        User.objects.create_user(email=email, password="Str0ng!Pass", role=role)
+        user = User.objects.create_user(email=email, password="Str0ng!Pass", role=role)
+        from allauth.account.models import EmailAddress
+
+        EmailAddress.objects.create(
+            user=user, email=user.email, primary=True, verified=True
+        )
         url = reverse("auth-login")
         response = api_client.post(url, {"email": email, "password": "Str0ng!Pass"})
         assert response.status_code == status.HTTP_200_OK
