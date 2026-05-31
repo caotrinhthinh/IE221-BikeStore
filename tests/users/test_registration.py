@@ -100,3 +100,36 @@ class TestUserRegistration:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "email" in response.data
         assert any("already registered" in str(err) for err in response.data["email"])
+
+    def test_confirm_email_via_get_succeeds(self, api_client: APIClient):
+        # 1. Create registered but unverified user
+        user = User.objects.create_user(
+            email="unverified_get@example.com", password="Str0ng!Pass123"
+        )
+        email_addr = EmailAddress.objects.create(
+            user=user, email=user.email, primary=True, verified=False
+        )
+
+        # 2. Generate confirmation key
+        from allauth.account.models import EmailConfirmationHMAC
+
+        confirmation = EmailConfirmationHMAC(email_addr)
+        key = confirmation.key
+
+        # 3. GET request to account-confirm-email URL
+        url = reverse("account_confirm_email", kwargs={"key": key})
+        response = api_client.get(url)
+
+        # 4. Verify response
+        assert response.status_code == status.HTTP_200_OK
+        assert "Xác Thực Thành Công" in response.content.decode("utf-8")
+
+        # 5. Verify EmailAddress is now verified
+        email_addr.refresh_from_db()
+        assert email_addr.verified is True
+
+    def test_confirm_email_via_get_fails_with_invalid_key(self, api_client: APIClient):
+        url = reverse("account_confirm_email", kwargs={"key": "invalid_key_value"})
+        response = api_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert "Xác Thực Thất Bại" in response.content.decode("utf-8")
