@@ -150,6 +150,8 @@ SIMPLE_JWT = {
 
 # ── Allauth / OAuth2 ─────────────────────────────────────────────
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"  # set to "mandatory" in prod
@@ -175,10 +177,6 @@ REST_AUTH = {
     "JWT_AUTH_RETURN_EXPIRATION": True,
     "TOKEN_MODEL": None,
     "LOGIN_SERIALIZER": "apps.users.serializers.CustomLoginSerializer",
-}
-
-# ── dj-rest-auth registration ─────────────────────────────────────
-REST_AUTH_REGISTER_SERIALIZERS = {
     "REGISTER_SERIALIZER": "apps.users.serializers.RegisterSerializer",
 }
 
