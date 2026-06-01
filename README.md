@@ -37,123 +37,7 @@
 
 ### Sơ đồ quan hệ
 
-```mermaid
-erDiagram
-    USER {
-        uuid id PK
-        string email UK
-        string first_name
-        string last_name
-        string role
-        bool is_active
-        datetime date_joined
-    }
-
-    STORE {
-        uuid id PK
-        string name
-        string phone
-        string email
-        string street
-        string city
-        string state
-        string zip_code
-        datetime created_at
-        datetime updated_at
-    }
-
-    CUSTOMER {
-        uuid id PK
-        uuid user_id FK
-        string first_name
-        string last_name
-        string phone
-        string email
-        string street
-        string city
-        string state
-        string zip_code
-    }
-
-    STAFF {
-        uuid id PK
-        uuid user_id FK
-        uuid store_id FK
-        uuid manager_id FK
-        string first_name
-        string last_name
-        string email
-        string phone
-        bool active
-    }
-
-    ORDER {
-        uuid id PK
-        uuid customer_id FK
-        uuid store_id FK
-        uuid staff_id FK
-        string status
-        date order_date
-        date required_date
-        date shipped_date
-    }
-
-    ORDER_ITEM {
-        uuid id PK
-        uuid order_id FK
-        uuid product_id FK
-        int quantity
-        decimal list_price
-        decimal discount
-    }
-
-    BRAND {
-        uuid id PK
-        string name UK
-    }
-
-    CATEGORY {
-        uuid id PK
-        uuid parent_id FK
-        string name UK
-        int lft
-        int rght
-        int tree_id
-        int level
-    }
-
-    PRODUCT {
-        uuid id PK
-        uuid brand_id FK
-        uuid category_id FK
-        string name
-        int model_year
-        decimal list_price
-        string description
-    }
-
-    STOCK {
-        uuid id PK
-        uuid store_id FK
-        uuid product_id FK
-        int quantity
-    }
-
-    USER ||--o| CUSTOMER : "có hồ sơ"
-    USER ||--o| STAFF : "có hồ sơ"
-    STORE ||--o{ STAFF : "làm việc tại"
-    STAFF ||--o{ STAFF : "quản lý"
-    STORE ||--o{ ORDER : "xử lý tại"
-    CUSTOMER ||--o{ ORDER : "đặt hàng"
-    STAFF ||--o{ ORDER : "phụ trách"
-    ORDER ||--o{ ORDER_ITEM : "gồm"
-    PRODUCT ||--o{ ORDER_ITEM : "thuộc"
-    BRAND ||--o{ PRODUCT : "thuộc thương hiệu"
-    CATEGORY ||--o{ PRODUCT : "thuộc danh mục"
-    CATEGORY ||--o{ CATEGORY : "danh mục con"
-    STORE ||--o{ STOCK : "lưu tồn kho"
-    PRODUCT ||--o{ STOCK : "có tồn kho"
-```
+![Sơ đồ cơ sở dữ liệu](image/db.png)
 
 ### Mô tả các bảng
 
@@ -246,88 +130,29 @@ Hệ thống gồm **10 bảng chính** chia thành 3 domain:
 
 ![Sơ đồ kiến trúc chi tiết (Bổ dọc theo App)](image/architecture_detailed.png)
 
-### Sơ đồ luồng hoạt động (Mermaid Flowchart)
+### Sơ đồ lớp chức năng
 
-```mermaid
-graph TD
-    %% Styling
-    classDef client fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
-    classDef config fill:#ede7f6,stroke:#5e35b1,stroke-width:2px;
-    classDef view fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px;
-    classDef logic fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
-    classDef db fill:#fffde7,stroke:#fbc02d,stroke-width:2px;
-    classDef ext fill:#ffebee,stroke:#c62828,stroke-width:2px;
-    classDef app fill:#ffffff,stroke:#9e9e9e,stroke-width:1px,stroke-dasharray: 5 5;
+![Sơ đồ lớp chức năng](image/Sơ%20đồ%20lớp%20chức%20năng.png)
 
-    Client["Thiết bị khách<br>(Browser / Postman / Swagger)"]:::client
+## Cấu trúc Cơ sở dữ liệu (Database ERD)
 
-    subgraph ConfigLayer ["1. Định tuyến & Middleware (config)"]
-        Router["urls.py<br>(Root Router)"]:::config
-        Middleware["Middleware Stack<br>(RequestID, SecurityHeaders)"]:::config
-        Auth["JWT Auth / OAuth2<br>(simplejwt, allauth)"]:::config
-    end
+![Sơ đồ cơ sở dữ liệu](image/db.png)
 
-    subgraph AppsLayer ["2. Tầng Ứng dụng (apps)"]
-        subgraph AppUsers ["App: users"]
-            UserViews["views.py<br>(Login, Me, Auth)"]:::view
-            UserService["services.py<br>(Đăng ký, Token)"]:::logic
-            UserModels["models.py<br>(User, RBAC)"]:::db
-        end
+Dự án sử dụng PostgreSQL với các ràng buộc khóa ngoại (Foreign Keys) chặt chẽ giữa 3 phân hệ chính:
+- **Tài khoản**: User, Staff, Customer
+- **Sản xuất**: Category, Brand, Product, Stock
+- **Kinh doanh**: Store, Order, OrderItem
 
-        subgraph AppSales ["App: sales"]
-            SalesViews["views.py<br>(Order, Store, Staff)"]:::view
-            SalesService["services.py<br>(Tạo đơn hàng, Trạng thái)"]:::logic
-            SalesModels["models.py<br>(Store, Customer, Order)"]:::db
-        end
+## Luồng hoạt động (Activity Flow) - Transaction Tạo đơn hàng
 
-        subgraph AppProd ["App: production"]
-            ProdViews["views.py<br>(Product, Category)"]:::view
-            ProdService["services.py<br>(Kho hàng, Danh mục)"]:::logic
-            ProdModels["models.py<br>(Brand, Product, Stock)"]:::db
-        end
-    end
+![Sơ đồ luồng tạo đơn hàng](image/activity_flow.png)
 
-    subgraph StorageLayer ["3. Tầng Lưu trữ Dữ liệu"]
-        Postgres[("PostgreSQL<br>Database")]:::db
-        Redis[("Redis<br>Cache & Broker")]:::db
-    end
+Luồng giao dịch tạo đơn hàng (Create Order) là một trong những quy trình nghiệp vụ quan trọng nhất, đảm bảo tính toàn vẹn dữ liệu (Atomic Transaction):
+1. **Kiểm tra tồn kho**: Database thực hiện truy vấn để đảm bảo số lượng sản phẩm đủ đáp ứng.
+2. **Ghi nhận dữ liệu**: Lưu đồng thời bản ghi `Order` và các `OrderItem` liên quan.
+3. **Gửi thông báo ngầm**: Kích hoạt Celery worker gửi email xác nhận mà không làm nghẽn API.
 
-    subgraph BackgroundLayer ["4. Tầng Tiến trình nền"]
-        Celery["Celery Workers<br>(Gửi Mail, Background)"]:::logic
-    end
-
-    subgraph ExternalServices ["5. Dịch vụ bên ngoài (Google)"]
-        GoogleOAuth["Google OAuth2 API<br>(Đăng nhập Social)"]:::ext
-        GoogleSMTP["Google SMTP Server<br>(Gửi Email hệ thống)"]:::ext
-    end
-
-    %% Connections
-    Client -->|HTTP / REST| Router
-    Router --> Middleware
-    Middleware --> Auth
-    
-    Auth --> UserViews
-    Auth --> SalesViews
-    Auth --> ProdViews
-
-    UserViews -->|Gọi logic| UserService
-    SalesViews -->|Gọi logic| SalesService
-    ProdViews -->|Gọi logic| ProdService
-
-    UserService -->|Ghi / Đọc| UserModels
-    SalesService -->|Ghi / Đọc| SalesModels
-    ProdService -->|Ghi / Đọc| ProdModels
-
-    UserModels --> Postgres
-    SalesModels --> Postgres
-    ProdModels --> Postgres
-    
-    UserService -.->|Đẩy task gửi mail| Celery
-    ProdViews -.->|Đọc/Ghi Cache| Redis
-    Celery <--> Redis
-    Celery -.->|Gửi Email| GoogleSMTP
-    Auth <-->|Xác thực Token| GoogleOAuth
-```
+---
 
 Dự án tuân thủ **Service Layer Pattern** để tách biệt rõ ràng các tầng trách nhiệm:
 
