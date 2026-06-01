@@ -134,15 +134,6 @@ Hệ thống gồm **10 bảng chính** chia thành 3 domain:
 
 ![Sơ đồ lớp chức năng](image/Sơ%20đồ%20lớp%20chức%20năng.png)
 
-## Cấu trúc Cơ sở dữ liệu (Database ERD)
-
-![Sơ đồ cơ sở dữ liệu](image/db.png)
-
-Dự án sử dụng PostgreSQL với các ràng buộc khóa ngoại (Foreign Keys) chặt chẽ giữa 3 phân hệ chính:
-- **Tài khoản**: User, Staff, Customer
-- **Sản xuất**: Category, Brand, Product, Stock
-- **Kinh doanh**: Store, Order, OrderItem
-
 ## Luồng hoạt động (Activity Flow) - Transaction Tạo đơn hàng
 
 ![Sơ đồ luồng tạo đơn hàng](image/activity_flow.png)
