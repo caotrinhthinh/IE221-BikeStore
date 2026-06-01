@@ -9,12 +9,20 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+from apps.users.views import UserConfirmEmailView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     # Auth endpoints (JWT + logout)
     path("auth/", include("apps.users.urls")),
     # OAuth2 — Google (allauth headless)
     path("auth/", include("allauth.socialaccount.urls")),
+    # Custom email confirm view to override dj-rest-auth's empty TemplateView
+    path(
+        "auth/registration/account-confirm-email/<str:key>/",
+        UserConfirmEmailView.as_view(),
+        name="account_confirm_email",
+    ),
     # dj-rest-auth registration
     path("auth/registration/", include("dj_rest_auth.registration.urls")),
     # App routers

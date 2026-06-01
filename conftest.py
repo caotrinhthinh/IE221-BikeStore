@@ -1,9 +1,19 @@
 # conftest.py — project-wide pytest fixtures
 import pytest
+from allauth.account.models import EmailAddress
 from rest_framework.test import APIClient
 
 from apps.sales.models import Staff, Store
 from apps.users.models import Role, User
+
+
+def _verify_email(user: User) -> None:
+    EmailAddress.objects.create(
+        user=user,
+        email=user.email,
+        primary=True,
+        verified=True,
+    )
 
 
 @pytest.fixture
@@ -21,11 +31,13 @@ def test_store(db) -> Store:
 
 @pytest.fixture
 def customer_user(db) -> User:
-    return User.objects.create_user(
+    user = User.objects.create_user(
         email="customer@example.com",
         password="Str0ng!Pass",
         role=Role.CUSTOMER,
     )
+    _verify_email(user)
+    return user
 
 
 @pytest.fixture
@@ -43,6 +55,7 @@ def staff_user(db, test_store) -> User:
         email=user.email,
         active=True,
     )
+    _verify_email(user)
     return user
 
 
@@ -61,15 +74,18 @@ def manager_user(db, test_store) -> User:
         email=user.email,
         active=True,
     )
+    _verify_email(user)
     return user
 
 
 @pytest.fixture
 def admin_user(db) -> User:
-    return User.objects.create_superuser(
+    user = User.objects.create_superuser(
         email="admin@example.com",
         password="Str0ng!Pass",
     )
+    _verify_email(user)
+    return user
 
 
 @pytest.fixture

@@ -13,6 +13,7 @@ from contextlib import suppress
 from dj_rest_auth.views import LoginView as DjRestAuthLoginView
 from dj_rest_auth.views import LogoutView as _DjLogoutView
 from django.core.cache import cache
+from django.views import View
 from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -143,3 +144,29 @@ class LogoutView(_DjLogoutView):
 @extend_schema_view(post=extend_schema(tags=["Auth"]))
 class TokenRefreshView(_TokenRefreshView):
     """POST /auth/token/refresh/ — exchange refresh for new access token."""
+
+
+class UserConfirmEmailView(View):
+    """
+    GET /auth/registration/account-confirm-email/<key>/
+    Renders confirmation status HTML page.
+    """
+
+    def get(self, request, key, *args, **kwargs):
+        from allauth.account.models import EmailConfirmation, EmailConfirmationHMAC
+        from django.shortcuts import render
+
+        co = EmailConfirmationHMAC.from_key(key)
+        if not co:
+            try:
+                co = EmailConfirmation.objects.get(key=key.lower())
+            except EmailConfirmation.DoesNotExist:
+                co = None
+
+        success = False
+        if co:
+            email_address = co.confirm(request)
+            if email_address:
+                success = True
+
+        return render(request, "account/email_confirm.html", {"success": success})
