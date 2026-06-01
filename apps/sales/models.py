@@ -4,6 +4,11 @@ apps/sales/models.py — Sales domain models.
 Tables: stores, customers, staffs, orders, order_items
 Follows ERD from IE221 requirements.
 
+Inheritance:
+- Store    → BaseModel + ContactMixin + AddressMixin
+- Customer → BaseModel + PersonMixin + ContactMixin + AddressMixin
+- Staff    → BaseModel + PersonMixin + ContactMixin
+
 Rules:
 - All business logic → services.py
 - All DB queries → selectors.py
@@ -14,23 +19,18 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
-from apps.core.models import BaseModel
+from apps.core.models import AddressMixin, BaseModel, ContactMixin, PersonMixin
 
 
-class Store(BaseModel):
+class Store(BaseModel, ContactMixin, AddressMixin):
     """
     Physical bike store location.
 
     DB table: stores
+    Inherits: ContactMixin (email, phone), AddressMixin (street, city, state, zip_code)
     """
 
     name = models.CharField(max_length=255, db_index=True)
-    phone = models.CharField(max_length=25, blank=True, default="")
-    email = models.EmailField(blank=True, default="")
-    street = models.CharField(max_length=255, blank=True, default="")
-    city = models.CharField(max_length=100, blank=True, default="")
-    state = models.CharField(max_length=100, blank=True, default="")
-    zip_code = models.CharField(max_length=20, blank=True, default="")
 
     class Meta:
         verbose_name = "Store"
@@ -41,12 +41,15 @@ class Store(BaseModel):
         return self.name
 
 
-class Customer(BaseModel):
+class Customer(BaseModel, PersonMixin, ContactMixin, AddressMixin):
     """
     Customer profile linked to a User account.
 
     DB table: customers
     OneToOne with User for authentication.
+    Inherits: PersonMixin (first_name, last_name, full_name),
+              ContactMixin (email, phone),
+              AddressMixin (street, city, state, zip_code)
     """
 
     user = models.OneToOneField(
@@ -56,35 +59,25 @@ class Customer(BaseModel):
         null=True,
         blank=True,
     )
-    first_name = models.CharField(max_length=150, blank=True, default="")
-    last_name = models.CharField(max_length=150, blank=True, default="")
-    phone = models.CharField(max_length=25, blank=True, default="")
-    email = models.EmailField(blank=True, default="", db_index=True)
-    street = models.CharField(max_length=255, blank=True, default="")
-    city = models.CharField(max_length=100, blank=True, default="")
-    state = models.CharField(max_length=100, blank=True, default="")
-    zip_code = models.CharField(max_length=20, blank=True, default="")
 
     class Meta:
         verbose_name = "Customer"
         verbose_name_plural = "Customers"
         ordering = ["last_name", "first_name"]
 
-    @property
-    def full_name(self) -> str:
-        return f"{self.first_name} {self.last_name}".strip()
-
     def __str__(self) -> str:
         return self.full_name or self.email
 
 
-class Staff(BaseModel):
+class Staff(BaseModel, PersonMixin, ContactMixin):
     """
     Staff member at a store.
 
     DB table: staffs
     - Self-referential FK for manager hierarchy (manager_id).
     - OneToOne with User for authentication.
+    Inherits: PersonMixin (first_name, last_name, full_name),
+              ContactMixin (email, phone)
     """
 
     user = models.OneToOneField(
@@ -94,10 +87,6 @@ class Staff(BaseModel):
         null=True,
         blank=True,
     )
-    first_name = models.CharField(max_length=150, blank=True, default="")
-    last_name = models.CharField(max_length=150, blank=True, default="")
-    email = models.EmailField(blank=True, default="", db_index=True)
-    phone = models.CharField(max_length=25, blank=True, default="")
     active = models.BooleanField(default=True, db_index=True)
     store = models.ForeignKey(
         Store,
@@ -123,10 +112,6 @@ class Staff(BaseModel):
         indexes = [
             models.Index(fields=["store", "active"], name="idx_staff_store_active"),
         ]
-
-    @property
-    def full_name(self) -> str:
-        return f"{self.first_name} {self.last_name}".strip()
 
     def __str__(self) -> str:
         return self.full_name or self.email

@@ -8,6 +8,7 @@ Design decisions:
 - Extends AbstractBaseUser (not AbstractUser) for full control.
 - Email is the login identifier, no username field.
 - Role enum stored as CharField for readability in DB queries.
+- PersonMixin provides first_name, last_name, full_name.
 """
 
 import uuid
@@ -18,6 +19,8 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.db import models
+
+from apps.core.models import PersonMixin
 
 
 class Role(models.TextChoices):
@@ -56,21 +59,22 @@ class UserManager(BaseUserManager["User"]):
         return self.create_user(email, password, **extra_fields)
 
 
-class User(AbstractBaseUser, PermissionsMixin):
+class User(PersonMixin, AbstractBaseUser, PermissionsMixin):
     """
     Project-wide User.
 
-    Fields:
+    Fields (own):
         email       — login identifier (unique)
         role        — RBAC role (see Role enum)
         is_active   — soft-delete flag
         is_staff    — access to Django admin
+
+    Fields (via PersonMixin):
+        first_name, last_name, full_name
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True, db_index=True)
-    first_name = models.CharField(max_length=150, blank=True)
-    last_name = models.CharField(max_length=150, blank=True)
     role = models.CharField(
         max_length=20,
         choices=Role.choices,
@@ -96,4 +100,5 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def full_name(self) -> str:
+        """Override PersonMixin.full_name to fall back to email."""
         return f"{self.first_name} {self.last_name}".strip() or self.email
