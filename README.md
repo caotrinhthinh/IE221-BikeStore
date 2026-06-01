@@ -134,16 +134,7 @@ Hệ thống gồm **10 bảng chính** chia thành 3 domain:
 
 ![Sơ đồ lớp chức năng](image/Sơ%20đồ%20lớp%20chức%20năng.png)
 
-## Luồng hoạt động (Activity Flow) - Transaction Tạo đơn hàng
 
-![Sơ đồ luồng tạo đơn hàng](image/activity_flow.png)
-
-Luồng giao dịch tạo đơn hàng (Create Order) là một trong những quy trình nghiệp vụ quan trọng nhất, đảm bảo tính toàn vẹn dữ liệu (Atomic Transaction):
-1. **Kiểm tra tồn kho**: Database thực hiện truy vấn để đảm bảo số lượng sản phẩm đủ đáp ứng.
-2. **Ghi nhận dữ liệu**: Lưu đồng thời bản ghi `Order` và các `OrderItem` liên quan.
-3. **Gửi thông báo ngầm**: Kích hoạt Celery worker gửi email xác nhận mà không làm nghẽn API.
-
----
 
 Dự án tuân thủ **Service Layer Pattern** để tách biệt rõ ràng các tầng trách nhiệm:
 
