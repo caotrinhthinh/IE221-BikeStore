@@ -33,8 +33,8 @@ if not RUNNING_IN_DOCKER:
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         }
     }
-    CELERY_BROKER_URL = "memory://"
-    CELERY_RESULT_BACKEND = "cache+memory://"
+    CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="memory://")
+    CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="cache+memory://")
 
 # Disable throttling in development and test environments
 REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []  # noqa: F405

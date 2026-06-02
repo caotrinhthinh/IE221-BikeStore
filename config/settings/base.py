@@ -5,6 +5,7 @@ config/settings/base.py — shared settings for all environments.
 from datetime import timedelta
 from pathlib import Path
 
+from celery.schedules import crontab
 from decouple import Csv, config
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -210,6 +211,13 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Asia/Ho_Chi_Minh"
 CELERY_TASK_TRACK_STARTED = True
+
+CELERY_BEAT_SCHEDULE = {
+    "cleanup-expired-orders-daily": {
+        "task": "apps.sales.tasks.cleanup_expired_orders",
+        "schedule": crontab(minute=0, hour=0),  # Chạy vào 12h đêm mỗi ngày
+    },
+}
 
 # ── Internationalization ──────────────────────────────────────────
 LANGUAGE_CODE = "en-us"

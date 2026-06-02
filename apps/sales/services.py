@@ -87,9 +87,22 @@ def create_order(
         raise ServiceError("An order must have at least one line item.")
 
     # Validate FK references upfront to get clear error messages
-    customer = Customer.objects.get(pk=customer_id)
-    store = Store.objects.get(pk=store_id)
-    staff: Optional[Staff] = Staff.objects.get(pk=staff_id) if staff_id else None
+    try:
+        customer = Customer.objects.get(pk=customer_id)
+    except Customer.DoesNotExist as exc:
+        raise ServiceError(f"Customer {customer_id} does not exist.") from exc
+
+    try:
+        store = Store.objects.get(pk=store_id)
+    except Store.DoesNotExist as exc:
+        raise ServiceError(f"Store {store_id} does not exist.") from exc
+
+    staff: Optional[Staff] = None
+    if staff_id:
+        try:
+            staff = Staff.objects.get(pk=staff_id)
+        except Staff.DoesNotExist as exc:
+            raise ServiceError(f"Staff {staff_id} does not exist.") from exc
 
     # Build a map of product_id -> Product to avoid per-line queries
     product_ids = [line.product_id for line in lines]

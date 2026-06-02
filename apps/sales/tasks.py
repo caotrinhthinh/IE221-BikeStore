@@ -13,9 +13,37 @@ def send_order_confirmation(self, order_id: str) -> str:
     Send order confirmation email.
     High priority queue — retries with exponential backoff.
     """
+    from django.conf import settings
+    from django.core.mail import send_mail
+
+    from apps.sales.models import Order
+
     try:
         logger.info("Sending order confirmation for order %s", order_id)
-        # Email sending logic would go here (e.g. django.core.mail.send_mail)
+
+        # Lấy thông tin Order và Customer từ Database
+        order = Order.objects.select_related("customer").get(pk=order_id)
+        customer_email = order.customer.email
+        customer_name = order.customer.full_name
+
+        subject = f"BikeStore - Xác nhận Đơn hàng #{str(order.id)[:8]}"
+        message = (
+            f"Xin chào {customer_name},\n\n"
+            f"Cảm ơn bạn đã mua sắm tại BikeStore! Đơn hàng của bạn đã được ghi nhận thành công.\n"
+            f"Trạng thái: {order.status.upper()}\n"
+            f"Ngày đặt hàng: {order.order_date}\n\n"
+            f"Trân trọng,\nĐội ngũ BikeStore."
+        )
+
+        # Gọi hàm gửi Mail thực sự của Django
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[customer_email],
+            fail_silently=False,
+        )
+
         return f"Confirmation sent for {order_id}"
     except Exception as exc:
         logger.error("Failed to send confirmation for %s: %s", order_id, exc)

@@ -43,3 +43,7 @@ coverage.xml
 # OS
 .DS_Store
 Thumbs.db
+
+# Celery Beat
+celerybeat-schedule
+celerybeat-schedule.*
