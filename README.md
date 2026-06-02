@@ -3,7 +3,7 @@
 ## Thông tin
 
 **Môn học:** IE221 — Kỹ thuật lập trình Python  
-**Nhóm thực hiện:** Nhóm 08
+**Nhóm thực hiện:** Nhóm 8993
 
 **Sinh viên thực hiện:**
 
@@ -389,4 +389,4 @@ Dự án được phát triển cho mục đích học tập môn IE221 — Kỹ
 
 ---
 
-**Developed with ❤️ by Nhóm 08 — UIT — IE221 Kỹ thuật lập trình Python**
+**Developed with ❤️ by Nhóm 8993 — UIT — IE221 Kỹ thuật lập trình Python**
