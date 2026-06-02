@@ -50,6 +50,7 @@ def get_google_auth_url(request: Request) -> str:
     Uses allauth's adapter to ensure the state param (CSRF) is set.
     """
     adapter = GoogleOAuth2Adapter(request)
+    app = adapter.get_provider().app
     callback_url: str = settings.SOCIALACCOUNT_PROVIDERS["google"]["APP"].get(
         "callback_url",
         request.build_absolute_uri("/auth/google/callback/"),
@@ -58,15 +59,15 @@ def get_google_auth_url(request: Request) -> str:
     request.session["google_oauth2_state"] = state
     client = OAuth2Client(
         request,
-        adapter.get_client_id(request),
-        adapter.get_client_secret(request),
+        app.client_id,
+        app.secret,
         adapter.access_token_method,
         adapter.access_token_url,
         callback_url,
-        scope=adapter.get_default_scope(),
     )
     return client.get_redirect_url(
         adapter.authorize_url,
+        scope=adapter.get_provider().get_scope(),
         extra_params={"access_type": "online", "state": state},
     )
 
@@ -105,11 +106,12 @@ def handle_google_callback(
     from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 
     adapter = GoogleOAuth2Adapter(request)
+    app = adapter.get_provider().app
     callback_url = request.build_absolute_uri("/auth/google/callback/")
     client = OAuth2Client(
         request,
-        adapter.get_client_id(request),
-        adapter.get_client_secret(request),
+        app.client_id,
+        app.secret,
         adapter.access_token_method,
         adapter.access_token_url,
         callback_url,
@@ -119,12 +121,12 @@ def handle_google_callback(
         token = client.get_access_token(code)
         social_token = adapter.parse_token(token)
         social_login = adapter.complete_login(
-            request, None, social_token, response=token
+            request, app, social_token, response=token
         )
         social_login.token = social_token
     except Exception as exc:
         logger.warning("Google OAuth2 token exchange failed: %s", exc)
-        raise AuthenticationFailed("Google authentication failed.") from exc
+        raise AuthenticationFailed(f"Google authentication failed: {exc}") from exc
 
     user = _create_or_link_user(social_login)
     logger.info("Google OAuth2 login success: user=%s", user.id)
