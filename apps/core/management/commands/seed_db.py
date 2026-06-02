@@ -1,5 +1,6 @@
 import random
 
+from allauth.account.models import EmailAddress
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -109,6 +110,8 @@ class Command(BaseCommand):
             first_name="Customer",
             last_name="One",
         )
+
+        # (Email verification moved to the end of script)
 
         # 2. Create Stores
         self.stdout.write("Creating stores...")
@@ -276,6 +279,15 @@ class Command(BaseCommand):
                 product=prod,
                 quantity=1,
                 list_price=prod.list_price,
+            )
+
+        # 7. Verify all created users' emails
+        self.stdout.write("Verifying user emails...")
+        for user in User.objects.all():
+            EmailAddress.objects.get_or_create(
+                user=user,
+                email=user.email,
+                defaults={"primary": True, "verified": True},
             )
 
         self.stdout.write(self.style.SUCCESS("Database seeded successfully!"))

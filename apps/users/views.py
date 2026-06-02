@@ -140,6 +140,8 @@ class GoogleCallbackView(APIView):
 class LogoutView(_DjLogoutView):
     """POST /auth/logout/ — blacklist refresh token."""
 
+    serializer_class = serializers.Serializer
+
 
 @extend_schema_view(post=extend_schema(tags=["Auth"]))
 class TokenRefreshView(_TokenRefreshView):
