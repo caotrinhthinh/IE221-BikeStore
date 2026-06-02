@@ -129,7 +129,7 @@ class OrderViewSet(
         )
         return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
 
-    @extend_schema(tags=["Orders"])
+    @extend_schema(tags=["Orders"], request=None)
     @action(
         detail=True,
         methods=["post"],
@@ -140,7 +140,7 @@ class OrderViewSet(
         updated_order = services.ship_order(order_id=order.pk)
         return Response(OrderSerializer(updated_order).data)
 
-    @extend_schema(tags=["Orders"])
+    @extend_schema(tags=["Orders"], request=None)
     @action(
         detail=True,
         methods=["post"],

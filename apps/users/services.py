@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from django.conf import settings
+from django.db import transaction
 from django.utils.crypto import get_random_string
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework.request import Request
@@ -143,10 +144,19 @@ def _create_or_link_user(social_login) -> User:
         user = user_selectors.get_user_by_email(email=email)
         logger.debug("Linking existing account: email=%s", email)
     except User.DoesNotExist:
-        user = User.objects.create_user(
-            email=email,
-            first_name=social_login.user.first_name or "",
-            last_name=social_login.user.last_name or "",
-        )
+        with transaction.atomic():
+            user = User.objects.create_user(
+                email=email,
+                first_name=social_login.user.first_name or "",
+                last_name=social_login.user.last_name or "",
+            )
+            from apps.sales.models import Customer
+
+            Customer.objects.create(
+                user=user,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                email=email,
+            )
         logger.info("Created new user via Google OAuth2: email=%s", email)
     return user
