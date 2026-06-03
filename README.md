@@ -128,32 +128,47 @@ Hệ thống gồm **10 bảng chính** chia thành 3 domain:
 
 ## Kiến trúc hệ thống
 
-![Sơ đồ kiến trúc chi tiết (Bổ dọc theo App)](image/architecture_detailed.png)
+Dự án được thiết kế theo kiến trúc **Domain-Driven Design (DDD)** kết hợp chặt chẽ với **Service Layer Pattern** nhằm đảm bảo tính mở rộng, dễ bảo trì và phân tách rõ ràng trách nhiệm của từng thành phần.
 
-### Sơ đồ lớp chức năng
+### 1. Kiến trúc tổng thể (System Architecture)
 
-![Sơ đồ lớp chức năng](image/Sơ%20đồ%20lớp%20chức%20năng.png)
+Sơ đồ kiến trúc tổng thể mô tả luồng đi của dữ liệu từ Client qua các lớp bảo mật (Router, JWT Auth) trước khi được phân bổ về các Module nghiệp vụ độc lập (Sales, Products, Users) và tương tác với tầng Business Layer tập trung.
 
+![Sơ đồ kiến trúc hệ thống tổng thể](image/architecture_monolithic.png)
 
+### 2. Kiến trúc chi tiết Service Layer Pattern (Pipeline)
 
-Dự án tuân thủ **Service Layer Pattern** để tách biệt rõ ràng các tầng trách nhiệm:
+Toàn bộ logic nghiệp vụ tuân thủ nghiêm ngặt **Service Layer Pattern** theo đường ống (pipeline):
 
+```text
+Request → API Router → View → Service / Selector → Model → Database
 ```
-Request → View → Service → Selector → Model → Database
-```
+
+![Sơ đồ kiến trúc chi tiết Service Layer](image/architecture_combined.png)
 
 | Tầng | File | Trách nhiệm |
 |------|------|-------------|
-| **View** | `views.py` | Xử lý HTTP request/response. **Không gọi `.objects.` trực tiếp** |
-| **Service** | `services.py` | Business logic — tạo đơn hàng, kiểm tra stock, FSM transitions |
-| **Selector** | `selectors.py` | Database queries — tất cả truy vấn tập trung tại đây |
-| **Model** | `models.py` | Schema, constraints, `BaseModel` (UUID pk, auto timestamps) |
+| **View** | `views.py` | Xử lý HTTP request/response, check permissions. **Không gọi `.objects.` trực tiếp** |
+| **Service** | `services.py` | Business logic (Mutations) — ghi dữ liệu, tạo đơn hàng, trừ tồn kho, FSM |
+| **Selector** | `selectors.py` | Database queries (Read) — tập trung tất cả truy vấn đọc dữ liệu tại đây |
+| **Model** | `models.py` | Định nghĩa Schema, khóa ngoại, constraints, `BaseModel` |
 
-**Nguyên tắc quan trọng:**
-- `create_order()` chạy trong atomic transaction, kiểm tra tồn kho trước khi tạo
-- Manager chỉ có thể quản lý cửa hàng của mình (store-scoped)
-- Xóa sản phẩm bị từ chối nếu đã có order items
-- Xóa danh mục bị từ chối nếu có danh mục con
+### 3. Quy trình tạo đơn hàng (Order Creation Workflow)
+
+Quy trình tạo đơn hàng là một trong những luồng phức tạp nhất hệ thống, đòi hỏi tính toàn vẹn dữ liệu (Data Integrity) cực cao.
+
+**Sơ đồ Tuần tự (Sequence Diagram)** thể hiện các bước tương tác theo thời gian giữa các thành phần:
+
+![Sơ đồ tuần tự quy trình tạo đơn hàng](image/order_workflow.png)
+
+**Sơ đồ Hoạt động (Activity Diagram)** phân rã chi tiết logic nghiệp vụ, các khối lệnh `if/else`, vòng lặp kiểm tra tồn kho và cơ chế **Atomic Transaction Rollback** nếu có bất kỳ sản phẩm nào hết hàng:
+
+![Sơ đồ hoạt động quy trình tạo đơn hàng](image/activity_order_workflow.png)
+
+**Nguyên tắc cốt lõi:**
+- `create_order()` chạy hoàn toàn trong **Atomic Transaction**, khóa dòng (`select_for_update`) và kiểm tra tồn kho trước khi tạo.
+- Bất kỳ lỗi nào (như thiếu hàng) sẽ kích hoạt **Rollback**, hủy bỏ toàn bộ dữ liệu tạm và trả về lỗi `400 Bad Request`.
+- Việc gửi Email xác nhận (qua SMTP) được đẩy cho **Celery Worker** xử lý bất đồng bộ (Asynchronous Task) ở background để không làm chậm trải nghiệm của khách hàng.
 
 ---
 
